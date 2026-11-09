@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>PennyPal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1d2433;--mu:#7a8399;--pr:#6c5ce7;--gr:#00b894;--rd:#e17055;--ln:#e8eaf2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root{--bg:#12141c;--card:#1c202c;--tx:#eef0f6;--mu:#98a1b8;--ln:#2a3040}}
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+html,body{margin:0;height:100%}body{background:var(--bg);color:var(--tx)}
+#app{max-width:520px;margin:0 auto;padding:12px 14px 96px}
+.card{background:var(--card);border-radius:18px;padding:14px;margin:10px 0;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:6px 2px}
+.hd b{font-size:17px}.hd button{background:var(--card);border:0;border-radius:12px;width:38px;height:38px;font-size:18px;color:var(--tx)}
+.bal{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff}.bal small{opacity:.85}.bal h1{margin:2px 0 8px;font-size:32px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}.mu{color:var(--mu);font-size:13px}
+.bar{height:8px;background:var(--ln);border-radius:6px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--gr);border-radius:6px}
+.sub{padding-left:14px;margin-top:6px}.it{padding:10px 0;border-bottom:1px solid var(--ln)}.it:last-child{border:0}
+.pos{color:var(--gr)}.neg{color:var(--rd)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);display:flex;justify-content:space-around;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--ln)}
+nav button{background:none;border:0;color:var(--mu);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px}nav button span{font-size:20px}nav .on{color:var(--pr);font-weight:700}
+.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--pr);color:#fff;font-size:30px;box-shadow:0 6px 16px rgba(108,92,231,.5)}
+#sh{display:none;position:fixed;inset:0;z-index:9}.bk{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.sb{position:absolute;left:0;right:0;bottom:0;max-width:520px;margin:auto;background:var(--card);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:90%;overflow:auto}
+.sb h3{margin:0 0 10px}input,select{width:100%;padding:13px;margin:6px 0;border:1px solid var(--ln);border-radius:12px;background:var(--bg);color:var(--tx);font-size:16px}
+.pb,.db,.sec{width:100%;padding:13px;border:0;border-radius:12px;font-size:16px;margin-top:8px;font-weight:600}.pb{background:var(--pr);color:#fff}.db{background:#fdecea;color:var(--rd)}.sec{background:var(--bg);color:var(--tx)}
+.seg{display:flex;gap:6px}.seg button{flex:1;padding:11px;border:1px solid var(--ln);border-radius:12px;background:var(--bg);color:var(--tx);font-weight:600}.seg .on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.ib{background:none;border:0;font-size:16px;padding:4px 8px}.ln{color:var(--pr);background:none;border:0;font-size:14px;padding:6px 0}
+#ts{position:fixed;left:50%;bottom:130px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;display:none;z-index:20}
+.lg{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}.lg i{width:12px;height:12px;border-radius:4px}
+</style></head><body><div id="app"></div><div id="sh"></div><div id="ts"></div>
+<script>
+const $=s=>document.querySelector(s),K='pennypal1',uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const COL=['#6c5ce7','#00b894','#fdcb6e','#e17055','#0984e3','#e84393','#00cec9','#b2bec3','#fab1a0','#55efc4'];
+let S;try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+S=S||{cats:[{id:'c1',name:'Food',e:'🍔',b:8000,subs:[{id:'s1',name:'Groceries',b:5000},{id:'s2',name:'Eating out',b:3000}]},{id:'c2',name:'Transport',e:'🚌',b:3000,subs:[]},{id:'c3',name:'Bills',e:'💡',b:6000,subs:[]},{id:'c4',name:'Fun',e:'🎮',b:2000,subs:[]},{id:'c5',name:'Shopping',e:'🛍️',b:3000,subs:[]}],tx:[],rem:{on:false,t:'21:00'},ex:{}};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+let off=0,tab='home',pie='cat',cur={};
+const toast=m=>{const t=$('#ts');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2600)};
+function P(o){const n=new Date(),b=n.getDate()>=4?new Date(n.getFullYear(),n.getMonth(),4):new Date(n.getFullYear(),n.getMonth()-1,4);const s=new Date(b.getFullYear(),b.getMonth()+o,4);return{s,e:new Date(s.getFullYear(),s.getMonth()+1,4)}}
+const txs=o=>{const p=P(o);return S.tx.filter(t=>t.d>=iso(p.s)&&t.d<iso(p.e)).sort((a,b)=>b.d.localeCompare(a.d))};
+const sum=a=>a.reduce((x,t)=>x+t.amt,0),cat=id=>S.cats.find(c=>c.id==id)||{name:'Other',e:'❔',subs:[],b:0};
+const lbl=o=>{const p=P(o),f=d=>d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});return f(p.s)+' – '+f(new Date(p.e-864e5))};
+const cl=()=>{$('#sh').style.display='none';$('#sh').innerHTML=''};
+const sheet=h=>{$('#sh').innerHTML='<div class=bk onclick=cl()></div><div class=sb>'+h+'</div>';$('#sh').style.display='block'};
+const two=(el,f)=>{if(el.dataset.c)f();else{el.dataset.c=1;el.textContent='Tap again to confirm'}};
+function bar(sp,b){if(!b)return'';const r=sp/b,c=r>1?'var(--rd)':r>.8?'#fdcb6e':'var(--gr)';return`<div class=bar><i style="width:${Math.min(100,r*100)}%;background:${c}"></i></div>`}
+function mood(i,e){if(!i)return'💸 Add your salary to get started!';const r=e/i;return r<.5?'🤑 Wallet is thriving!':r<.8?'😎 Nicely balanced':r<1?'😬 Easy on the spending!':'🚨 Over income. Time to chill!'}
+function render(){const a=$('#app'),T=txs(off),inc=sum(T.filter(t=>t.type=='inc')),exp=sum(T.filter(t=>t.type=='exp'));let h='';
+if(tab=='home'||tab=='chart')h+=`<div class=hd><button onclick="off--;render()">‹</button><b>${lbl(off)}${off?'':' · now'}</b><button onclick="off++;render()">›</button></div>`;
+if(tab=='home'){
+h+=`<div class="card bal"><small>Left this cycle</small><h1>${inr(inc-exp)}</h1><div class=row><span>⬆ ${inr(inc)}</span><span>⬇ ${inr(exp)}</span></div><div style="margin-top:8px">${mood(inc,exp)}</div></div>`;
+const pp=P(-1);if(off==0&&!S.ex[iso(P(-1).s)]&&txs(-1).length)h+=`<div class=card onclick="off=-1;exportCsv()">📦 Last cycle (${lbl(-1)}) is ready to export. <b style="color:var(--pr)">Tap to export</b></div>`;
+h+='<div class=card><b>Budgets</b>';
+S.cats.forEach(c=>{const sp=sum(T.filter(t=>t.type=='exp'&&t.cat==c.id));h+=`<div class=it><div class=row><span>${c.e} ${esc(c.name)}</span><span class=mu>${inr(sp)}${c.b?' / '+inr(c.b):''}</span></div>${bar(sp,c.b)}`;
+c.subs.forEach(s=>{const x=sum(T.filter(t=>t.type=='exp'&&t.sub==s.id));if(x||s.b)h+=`<div class=sub><div class=row><span class=mu>${esc(s.name)}</span><span class=mu>${inr(x)}${s.b?' / '+inr(s.b):''}</span></div>${bar(x,s.b)}</div>`});h+='</div>'});
+h+='</div><div class=card><b>Entries</b>';if(!T.length)h+='<p class=mu>Nothing yet. Tap + to add your first entry 🎉</p>';
+T.forEach(t=>{const c=cat(t.cat),s=c.subs.find(x=>x.id==t.sub);h+=`<div class="it row" onclick="openTx('${t.id}')"><div>${t.type=='inc'?'💰 '+esc(t.note||'Income'):c.e+' '+esc(c.name)+(s?' › '+esc(s.name):'')}<div class=mu>${t.d}${t.type=='exp'&&t.note?' · '+esc(t.note):''}</div></div><b class="${t.type=='inc'?'pos':'neg'}">${t.type=='inc'?'+':'-'}${inr(t.amt)}</b></div>`});
+h+='</div><button class=fab onclick="openTx()">+</button>'}
+if(tab=='chart'){h+=`<div class=seg style="margin:8px 0"><button class="${pie=='cat'?'on':''}" onclick="pie='cat';render()">By category</button><button class="${pie=='sub'?'on':''}" onclick="pie='sub';render()">By subcategory</button></div><div class="card" style="text-align:center"><canvas id=pc style="width:280px;height:280px"></canvas><div id=lg style="text-align:left;margin-top:10px"></div></div>`}
+if(tab=='cats'){h+='<div class=hd><b>Categories</b></div>';S.cats.forEach(c=>{h+=`<div class=card><div class=row><b>${c.e} ${esc(c.name)}</b><span><span class=mu>${c.b?inr(c.b):'no budget'}</span><button class=ib onclick="openCat('${c.id}')">✏️</button></span></div>`;
+c.subs.forEach(s=>h+=`<div class="sub row"><span>${esc(s.name)}</span><span><span class=mu>${s.b?inr(s.b):'no budget'}</span><button class=ib onclick="openSub('${c.id}','${s.id}')">✏️</button></span></div>`);h+=`<button class=ln onclick="openSub('${c.id}')">+ Add subcategory</button></div>`});
+h+='<button class=pb onclick="openCat()">+ New category</button>'}
+if(tab=='set'){h+=`<div class=hd><b>Settings</b></div><div class=card><b>⏰ Daily reminder</b><p class=mu>Gentle nudge to log your spends.</p><div class=row><span>Remind me</span><input type=checkbox style="width:24px" ${S.rem.on?'checked':''} onchange="S.rem.on=this.checked;setRem()"></div><input type=time value="${S.rem.t}" onchange="S.rem.t=this.value;setRem()"></div>
+<div class=card><b>📦 Export</b><p class=mu>Exports the cycle shown on Home (${lbl(off)}) as CSV.</p><button class=pb onclick="exportCsv()">Export this cycle</button></div>
+<div class=card><b>Danger zone</b><button class=db onclick="two(this,()=>{S.tx=[];save();render();toast('Entries cleared')})">Delete all entries</button></div>`}
+h+=`<nav>${[['home','🏠','Home'],['chart','🥧','Chart'],['cats','🗂️','Categories'],['set','⚙️','Settings']].map(x=>`<button class="${tab==x[0]?'on':''}" onclick="tab='${x[0]}';render()"><span>${x[1]}</span>${x[2]}</button>`).join('')}</nav>`;
+a.innerHTML=h;if(tab=='chart')drawPie(T)}
+function drawPie(T){const m={};T.filter(t=>t.type=='exp').forEach(t=>{const c=cat(t.cat),s=c.subs.find(x=>x.id==t.sub),k=pie=='sub'&&s?c.e+' '+s.name:c.e+' '+c.name;m[k]=(m[k]||0)+t.amt});
+const e=Object.entries(m).sort((a,b)=>b[1]-a[1]),tot=e.reduce((x,y)=>x+y[1],0),cv=$('#pc'),d=devicePixelRatio||1;cv.width=560*d/2*2/2*1;cv.width=280*d;cv.height=280*d;const g=cv.getContext('2d');g.scale(d,d);
+if(!tot){$('#lg').innerHTML='<p class=mu style="text-align:center">No expenses this cycle yet 🙈</p>';return}
+let a=-Math.PI/2;e.forEach((x,i)=>{const w=x[1]/tot*Math.PI*2;g.beginPath();g.moveTo(140,140);g.arc(140,140,130,a,a+w);g.closePath();g.fillStyle=COL[i%COL.length];g.fill();a+=w});
+g.beginPath();g.arc(140,140,62,0,7);g.fillStyle=getComputedStyle(document.body).getPropertyValue('--card')||'#fff';g.fill();g.fillStyle=getComputedStyle(document.body).color;g.font='bold 18px system-ui';g.textAlign='center';g.fillText(inr(tot),140,146);
+$('#lg').innerHTML=e.map((x,i)=>`<div class="lg"><i style="background:${COL[i%COL.length]}"></i><span style="flex:1">${esc(x[0])}</span><b>${inr(x[1])} · ${Math.round(x[1]/tot*100)}%</b></div>`).join('')}
+function openTx(id){const t=id?S.tx.find(x=>x.id==id):{type:'exp',amt:'',d:iso(new Date()),cat:S.cats[0]&&S.cats[0].id,sub:'',note:''};cur={...t};
+sheet(`<h3>${id?'Edit':'Add'} entry</h3><div class=seg><button id=tI onclick="ty('inc')">💰 Income</button><button id=tE onclick="ty('exp')">💸 Expense</button></div><input id=fa type=number inputmode=decimal placeholder="Amount" value="${t.amt}"><div id=cw></div><input id=fd type=date value="${t.d}"><input id=fn placeholder="${t.type=='inc'?'Source (e.g. Salary)':'Note (optional)'}" value="${esc(t.note)}"><button class=pb onclick="svTx('${id||''}')">Save</button>${id?`<button class=db onclick="two(this,()=>{S.tx=S.tx.filter(x=>x.id!='${id}');save();cl();render()})">Delete</button>`:''}`);ty(t.type)}
+function ty(t){cur.type=t;$('#tI').className=t=='inc'?'on':'';$('#tE').className=t=='exp'?'on':'';$('#fn').placeholder=t=='inc'?'Source (e.g. Salary)':'Note (optional)';
+$('#cw').innerHTML=t=='exp'?`<select id=fc onchange="cur.cat=this.value;cur.sub='';sb()">${S.cats.map(c=>`<option value="${c.id}" ${c.id==cur.cat?'selected':''}>${c.e} ${esc(c.name)}</option>`).join('')}</select><select id=fs onchange="cur.sub=this.value"></select>`:'';if(t=='exp')sb()}
+function sb(){$('#fs').innerHTML='<option value="">No subcategory</option>'+cat(cur.cat).subs.map(s=>`<option value="${s.id}" ${s.id==cur.sub?'selected':''}>${esc(s.name)}</option>`).join('')}
+function svTx(id){const a=parseFloat($('#fa').value);if(!(a>0))return toast('Enter an amount');if(cur.type=='exp'&&!S.cats.length)return toast('Add a category first');
+const t={id:id||uid(),type:cur.type,amt:a,d:$('#fd').value||iso(new Date()),cat:cur.type=='exp'?cur.cat:'',sub:cur.type=='exp'?cur.sub:'',note:$('#fn').value};
+if(id)S.tx=S.tx.map(x=>x.id==id?t:x);else S.tx.push(t);save();cl();render();toast(t.type=='inc'?'Cha-ching! 💰':'Logged ✅')}
+function openCat(id){const c=id?cat(id):{name:'',e:'🏷️',b:''};sheet(`<h3>${id?'Edit':'New'} category</h3><input id=cn placeholder="Name" value="${esc(c.name)}"><input id=ce placeholder="Emoji" value="${c.e}"><input id=cb type=number inputmode=decimal placeholder="Monthly budget (optional)" value="${c.b||''}"><button class=pb onclick="svCat('${id||''}')">Save</button>${id?`<button class=db onclick="two(this,()=>{S.cats=S.cats.filter(x=>x.id!='${id}');save();cl();render()})">Delete category</button>`:''}`)}
+function svCat(id){const n=$('#cn').value.trim();if(!n)return toast('Name needed');const v={name:n,e:$('#ce').value||'🏷️',b:parseFloat($('#cb').value)||0};if(id)Object.assign(cat(id),v);else S.cats.push({id:uid(),subs:[],...v});save();cl();render()}
+function openSub(cid,sid){const s=sid?cat(cid).subs.find(x=>x.id==sid):{name:'',b:''};sheet(`<h3>${sid?'Edit':'New'} subcategory</h3><input id=cn placeholder="Name" value="${esc(s.name)}"><input id=cb type=number inputmode=decimal placeholder="Budget (optional)" value="${s.b||''}"><button class=pb onclick="svSub('${cid}','${sid||''}')">Save</button>${sid?`<button class=db onclick="two(this,()=>{const c=cat('${cid}');c.subs=c.subs.filter(x=>x.id!='${sid}');save();cl();render()})">Delete subcategory</button>`:''}`)}
+function svSub(cid,sid){const n=$('#cn').value.trim();if(!n)return toast('Name needed');const c=cat(cid),v={name:n,b:parseFloat($('#cb').value)||0};if(sid)Object.assign(c.subs.find(x=>x.id==sid),v);else c.subs.push({id:uid(),...v});save();cl();render()}
+const NP=()=>{const C=window.Capacitor;return C&&C.isNativePlatform&&C.isNativePlatform()?C.Plugins:null};
+async function setRem(){save();const N=NP();if(!N||!N.LocalNotifications){toast('Reminders work in the installed APK');return}const L=N.LocalNotifications;
+try{await L.cancel({notifications:[{id:1}]});if(S.rem.on){const p=await L.requestPermissions();if(p.display!='granted')return toast('Allow notifications to get reminders');const[h,m]=S.rem.t.split(':').map(Number);
+await L.schedule({notifications:[{id:1,title:'💰 PennyPal check-in',body:"Did you log today's spends?",schedule:{on:{hour:h,minute:m},allowWhileIdle:true}}]});toast('Daily reminder set ⏰')}}catch(e){toast('Could not set reminder')}}
+async function exportCsv(){const p=P(off),T=txs(off).slice().reverse(),q=v=>'"'+String(v||'').replace(/"/g,'""')+'"';
+let r=[['Date','Type','Category','Subcategory','Note','Amount']];T.forEach(t=>{const c=cat(t.cat),s=c.subs.find(x=>x.id==t.sub);r.push([t.d,t.type=='inc'?'Income':'Expense',t.type=='inc'?'':c.name,s?s.name:'',t.note,t.amt])});
+const i=sum(T.filter(t=>t.type=='inc')),e=sum(T.filter(t=>t.type=='exp'));r.push([],['','','','','Total income',i],['','','','','Total expenses',e],['','','','','Balance',i-e]);
+const csv=r.map(x=>x.map(q).join(',')).join('\n'),name='pennypal_'+iso(p.s)+'_to_'+iso(new Date(p.e-864e5))+'.csv';S.ex[iso(p.s)]=1;save();
+const N=NP();if(N&&N.Filesystem&&N.Share){try{const f=await N.Filesystem.writeFile({path:name,data:csv,directory:'CACHE',encoding:'utf8'});await N.Share.share({title:name,url:f.uri});}catch(e){toast('Export cancelled')}}
+else{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;a.click();toast('Exported 📦')}render()}
+render();
+</script></body></html>
